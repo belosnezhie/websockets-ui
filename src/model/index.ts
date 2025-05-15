@@ -10,10 +10,11 @@ export interface SocketResponse {
   id: 0;
 }
 
-export const RequestTypes = {
+export const messageTypes = {
   REG: 'reg',
   UPDATE_WINNERS: 'update_winners',
   CREATE_ROOM: 'create_room',
+  UPDATE_ROOM: 'update_room',
   ADD_USER_TO_ROOM: 'add_user_to_room',
   ADD_SHIPS: 'add_ships',
   STERT_GAME: 'start_game',
@@ -31,6 +32,16 @@ export interface PlayerData {
 export interface Player {
   name: string;
   index: string;
-  error: boolean;
-  errorText: string;
+  error?: boolean;
+  errorText?: string;
+}
+
+export interface Winner {
+  name: string;
+  wins: number;
+}
+
+export interface Room {
+  roomId: string;
+  roomUsers: [Player?, Player?];
 }

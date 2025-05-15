@@ -19,7 +19,7 @@ class PlayerController {
             errorText: '',
         };
         this.players.push(player);
-        return JSON.stringify(player);
+        return player;
     }
     isPlayerData(obj) {
         if (typeof obj !== 'object' || obj === null)

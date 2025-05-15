@@ -5,7 +5,9 @@ import { parseData } from '../utils/parseData';
 export class PlayerController {
   public players: Player[] = [];
 
-  public createPlayer(data: string): string {
+  constructor() {}
+
+  public createPlayer(data: string): Player {
     const playerData = parseData(data);
     if (!this.isPlayerData(playerData)) {
       throw new Error('Invalid player data');
@@ -18,7 +20,7 @@ export class PlayerController {
     };
 
     this.players.push(player);
-    return JSON.stringify(player);
+    return player;
   }
 
   private isPlayerData(obj: unknown): obj is PlayerData {
@@ -29,3 +31,5 @@ export class PlayerController {
     return typeof data.name === 'string' && typeof data.password === 'string';
   }
 }
+
+export const playerController = new PlayerController();
