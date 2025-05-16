@@ -55,4 +55,17 @@ export interface RoomData {
 export interface Game {
   idGame: string;
   idPlayer: string;
+  ships?: Ship[];
+}
+
+export interface Ship {
+  position: Position;
+  direction: boolean;
+  length: number;
+  type: 'small' | 'medium' | 'large' | 'huge';
+}
+
+interface Position {
+  x: number;
+  y: number;
 }

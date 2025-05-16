@@ -2,11 +2,11 @@ import { WebSocket } from 'ws';
 
 import { connectionController } from '../controllers/connection-controller';
 import { playerController } from '../controllers/player-controller';
-import { IncomingRequest, messageTypes } from '../model';
+import { IncomingRequest, messageTypes, Room, Player } from '../model';
 import { parseData } from '../utils/parseData';
 import { roomController } from '../controllers/room-controller';
 import { stateController } from '../controllers/state-controller';
-import { gameController } from '../controllers/game-controller';
+// import { gameController } from '../controllers/game-controller';
 
 export function handleConnection(ws: WebSocket) {
   console.log('New player connected');
@@ -66,21 +66,24 @@ const handleAddingUser = (ws: WebSocket, message: IncomingRequest) => {
   if (!currentPlayer) {
     throw new Error('Player does not exist');
   }
-  const rooms = roomController.addPlayer(message.data, currentPlayer);
-  const game = gameController.createGame(currentPlayer);
-  // roomController.deleteAvailableRoom();
+  const room: Room[] = roomController.addPlayer(message.data, currentPlayer);
+  const players: Player[] = room[0]?.roomUsers as Player[];
+  const roomMessage = wrapResp(messageTypes.UPDATE_ROOM, room);
+  handleDistribution(roomMessage, players);
 
-  const roomMessage = wrapResp(messageTypes.UPDATE_ROOM, rooms);
-  handleDistribution(roomMessage);
-  const gameMessage = wrapResp(messageTypes.CREATE_GAME, game);
-  handleDistribution(gameMessage);
+  players.forEach((player) => {
+    const game = roomController.createGame(player);
+    const gameMessage = wrapResp(messageTypes.CREATE_GAME, game);
+    handleDistribution(gameMessage, [player]);
+  });
 };
 
-const handleDistribution = (message: string) => {
-  const sockets = connectionController.keys();
-  sockets.forEach((socket) => {
-    socket.send(message);
-  });
+const handleDistribution = (message: string, players: Player[]): void => {
+  for (const [socket, player] of connectionController.entries()) {
+    if (players.includes(player) && socket.readyState === WebSocket.OPEN) {
+      socket.send(message);
+    }
+  }
 };
 
 const wrapResp = (type: string, data: unknown): string => {

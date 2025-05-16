@@ -1,21 +1,23 @@
-import { randomUUID } from 'crypto';
-import { Game, Player } from '../model';
+// import { randomUUID } from 'crypto';
+// import { Game, Player } from '../model';
 
-export class GameController {
-  public game: Game = {
-    idGame: '',
-    idPlayer: '',
-  };
-  private players: Player[] = [];
+// export class GameController {
+//   public game: Game = {
+//     idGame: '',
+//     idPlayer: '',
+//   };
+//   private players: Player[] = [];
 
-  public createGame(currentPlayer: Player) {
-    this.game.idGame = randomUUID();
-    this.game.idPlayer = currentPlayer.index;
+//   public createGame(currentPlayer: Player, roomUsers: Player[]) {
+//     this.game.idGame = randomUUID();
+//     this.game.idPlayer = currentPlayer.index;
 
-    this.players.push(currentPlayer);
+//     const roomPlayers;
 
-    return this.game;
-  }
-}
+//     this.players.push(currentPlayer);
 
-export const gameController = new GameController();
+//     return this.game;
+//   }
+// }
+
+// export const gameController = new GameController();

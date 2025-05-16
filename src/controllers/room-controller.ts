@@ -1,9 +1,13 @@
 import { randomUUID } from 'crypto';
-import { Player, Room, RoomData } from '../model';
+import { Player, Room, RoomData, Game } from '../model';
 import { parseData } from '../utils/parseData';
 
 export class RoomController {
   public rooms: Room[] = [];
+  public game: Game = {
+    idGame: '',
+    idPlayer: '',
+  };
 
   public createRoom(player: Player) {
     const room: Room = {
@@ -18,13 +22,20 @@ export class RoomController {
     return this.rooms;
   }
 
-  public addPlayer(data: string, player: Player) {
+  public addPlayer(data: string, player: Player): Room[] {
     const roomData: RoomData = parseData(data);
     const roomID = roomData.indexRoom;
     const room = this.findRoom(roomID);
     room.roomUsers.push(player);
 
-    return this.rooms;
+    return [room];
+  }
+
+  public createGame(currentPlayer: Player) {
+    this.game.idGame = randomUUID();
+    this.game.idPlayer = currentPlayer.index;
+
+    return this.game;
   }
 
   // public deleteAvailableRoom() {};
