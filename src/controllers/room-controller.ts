@@ -13,13 +13,16 @@ export class RoomController {
     const room: Room = {
       roomId: randomUUID(),
       roomUsers: [player],
+      roomStatus: 'available',
     };
 
     this.rooms.push(room);
   }
 
   public shareRooms(): Room[] {
-    return this.rooms;
+    return this.rooms.filter((room) => {
+      return room.roomStatus === 'available';
+    });
   }
 
   public addPlayer(data: string, player: Player): Room[] {
@@ -29,6 +32,13 @@ export class RoomController {
     room.roomUsers.push(player);
 
     return [room];
+  }
+
+  public makeRoomUnavailible(roomID: string): Room[] {
+    const room = this.findRoom(roomID);
+    room.roomStatus = 'occupied';
+
+    return this.shareRooms();
   }
 
   public createGame(currentPlayer: Player) {

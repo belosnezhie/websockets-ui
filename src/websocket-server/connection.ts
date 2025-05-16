@@ -68,14 +68,16 @@ const handleAddingUser = (ws: WebSocket, message: IncomingRequest) => {
   }
   const room: Room[] = roomController.addPlayer(message.data, currentPlayer);
   const players: Player[] = room[0]?.roomUsers as Player[];
-  const roomMessage = wrapResp(messageTypes.UPDATE_ROOM, room);
-  handleDistribution(roomMessage, players);
+  handleDistribution(wrapResp(messageTypes.UPDATE_ROOM, room), players);
 
   players.forEach((player) => {
     const game = roomController.createGame(player);
-    const gameMessage = wrapResp(messageTypes.CREATE_GAME, game);
-    handleDistribution(gameMessage, [player]);
+    handleDistribution(wrapResp(messageTypes.CREATE_GAME, game), [player]);
   });
+
+  const roomID = room[0]?.roomId as string;
+  const rooms = roomController.makeRoomUnavailible(roomID);
+  handleDistribution(wrapResp(messageTypes.UPDATE_ROOM, rooms), players);
 };
 
 const handleDistribution = (message: string, players: Player[]): void => {
