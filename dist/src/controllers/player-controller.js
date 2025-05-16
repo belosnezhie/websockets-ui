@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PlayerController = void 0;
+exports.playerController = exports.PlayerController = void 0;
 const crypto_1 = require("crypto");
 const parseData_1 = require("../utils/parseData");
 class PlayerController {
@@ -29,4 +29,5 @@ class PlayerController {
     }
 }
 exports.PlayerController = PlayerController;
+exports.playerController = new PlayerController();
 //# sourceMappingURL=player-controller.js.map

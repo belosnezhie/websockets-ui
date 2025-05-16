@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RequestTypes = void 0;
-exports.RequestTypes = {
+exports.messageTypes = void 0;
+exports.messageTypes = {
     REG: 'reg',
     UPDATE_WINNERS: 'update_winners',
     CREATE_ROOM: 'create_room',
+    UPDATE_ROOM: 'update_room',
     ADD_USER_TO_ROOM: 'add_user_to_room',
     ADD_SHIPS: 'add_ships',
     STERT_GAME: 'start_game',

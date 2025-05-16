@@ -6,6 +6,7 @@ import { IncomingRequest, messageTypes } from '../model';
 import { parseData } from '../utils/parseData';
 import { roomController } from '../controllers/room-controller';
 import { stateController } from '../controllers/state-controller';
+import { gameController } from '../controllers/game-controller';
 
 export function handleConnection(ws: WebSocket) {
   console.log('New player connected');
@@ -65,10 +66,14 @@ const handleAddingUser = (ws: WebSocket, message: IncomingRequest) => {
   if (!currentPlayer) {
     throw new Error('Player does not exist');
   }
-  const room = roomController.addPlayer(message.data, currentPlayer);
+  const rooms = roomController.addPlayer(message.data, currentPlayer);
+  const game = gameController.createGame(currentPlayer);
+  // roomController.deleteAvailableRoom();
 
-  const roomMessage = wrapResp(messageTypes.CREATE_ROOM, room);
+  const roomMessage = wrapResp(messageTypes.UPDATE_ROOM, rooms);
   handleDistribution(roomMessage);
+  const gameMessage = wrapResp(messageTypes.CREATE_GAME, game);
+  handleDistribution(gameMessage);
 };
 
 const handleDistribution = (message: string) => {

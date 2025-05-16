@@ -15,9 +15,10 @@ export const messageTypes = {
   UPDATE_WINNERS: 'update_winners',
   CREATE_ROOM: 'create_room',
   UPDATE_ROOM: 'update_room',
+  CREATE_GAME: 'create_game',
   ADD_USER_TO_ROOM: 'add_user_to_room',
   ADD_SHIPS: 'add_ships',
-  STERT_GAME: 'start_game',
+  START_GAME: 'start_game',
   ATTACK: 'attack',
   RANDOM_ATTACK: 'randomAttack',
   TURN: 'turn',
@@ -44,4 +45,14 @@ export interface Winner {
 export interface Room {
   roomId: string;
   roomUsers: [Player?, Player?];
+  roomStatus?: 'available' | 'occupied';
+}
+
+export interface RoomData {
+  indexRoom: string;
+}
+
+export interface Game {
+  idGame: string;
+  idPlayer: string;
 }
