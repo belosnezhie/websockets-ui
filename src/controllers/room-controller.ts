@@ -15,6 +15,7 @@ export class RoomController {
       roomUsers: [player],
       roomStatus: 'available',
       shipsByUserID: new Map(),
+      nextTurnPlayerID: player.index,
     };
 
     this.rooms.push(room);
@@ -73,11 +74,27 @@ export class RoomController {
 
   public startGame(playerID: string) {
     const room = this.findRoomByPlayerID(playerID);
+    if (room.roomUsers.length === 2) {
+      room.nextTurnPlayerID = String(room.roomUsers[0]?.index);
+    }
     const ships = room.shipsByUserID.get(playerID);
     return {
       ships: ships,
       currentPlayerIndex: playerID,
     };
+  }
+
+  public getTurnPlayerId(prevTurnPlayerID: string): string {
+    const room = this.findRoomByPlayerID(prevTurnPlayerID);
+    return String(room.nextTurnPlayerID);
+  }
+
+  public setNextTurnPlayerId(currentPlayerID: string): void {
+    const room = this.findRoomByPlayerID(currentPlayerID);
+    const nextPlayer = room.roomUsers.find(
+      (player) => player?.index !== currentPlayerID,
+    );
+    room.nextTurnPlayerID = String(nextPlayer?.index);
   }
 
   public findRoomByPlayerID(playerID: string): Room {

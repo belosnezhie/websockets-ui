@@ -46,6 +46,7 @@ export interface Room {
   roomId: string;
   roomUsers: [Player?, Player?];
   shipsByUserID: Map<string, Ship[]>;
+  nextTurnPlayerID: string;
   roomStatus?: 'available' | 'occupied';
 }
 

@@ -114,6 +114,11 @@ const handleShipsCreation = (message: IncomingRequest) => {
       handleDistribution(wrapResp(messageTypes.START_GAME, startGameMessage), [
         player,
       ]);
+
+      handleDistribution(wrapResp(messageTypes.TURN, room.nextTurnPlayerID), [
+        player,
+      ]);
+      roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
     });
   }
 };
