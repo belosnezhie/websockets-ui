@@ -45,6 +45,7 @@ export interface Winner {
 export interface Room {
   roomId: string;
   roomUsers: [Player?, Player?];
+  shipsByUserID: Map<string, Ship[]>;
   roomStatus?: 'available' | 'occupied';
 }
 
@@ -55,7 +56,12 @@ export interface RoomData {
 export interface Game {
   idGame: string;
   idPlayer: string;
-  ships?: Ship[];
+}
+
+export interface GameData {
+  gameId: string;
+  ships: Ship[];
+  indexPlayer: string;
 }
 
 export interface Ship {

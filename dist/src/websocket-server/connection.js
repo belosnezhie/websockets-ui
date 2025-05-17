@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleConnection = handleConnection;
+const ws_1 = require("ws");
 const connection_controller_1 = require("../controllers/connection-controller");
 const player_controller_1 = require("../controllers/player-controller");
 const model_1 = require("../model");
@@ -24,6 +25,9 @@ function handleConnection(ws) {
                 break;
             case model_1.messageTypes.ADD_USER_TO_ROOM:
                 handleAddingUser(ws, incomingMessage);
+                break;
+            case model_1.messageTypes.ADD_SHIPS:
+                handleShipsCreation(incomingMessage);
                 break;
         }
     });
@@ -56,14 +60,34 @@ const handleAddingUser = (ws, message) => {
         throw new Error('Player does not exist');
     }
     const room = room_controller_1.roomController.addPlayer(message.data, currentPlayer);
-    const roomMessage = wrapResp(model_1.messageTypes.CREATE_ROOM, room);
-    handleDistribution(roomMessage);
-};
-const handleDistribution = (message) => {
-    const sockets = connection_controller_1.connectionController.keys();
-    sockets.forEach((socket) => {
-        socket.send(message);
+    const players = room[0]?.roomUsers;
+    handleDistribution(wrapResp(model_1.messageTypes.UPDATE_ROOM, room), players);
+    players.forEach((player) => {
+        const game = room_controller_1.roomController.createGame(player);
+        handleDistribution(wrapResp(model_1.messageTypes.CREATE_GAME, game), [player]);
     });
+    const roomID = room[0]?.roomId;
+    const rooms = room_controller_1.roomController.makeRoomUnavailible(roomID);
+    handleDistribution(wrapResp(model_1.messageTypes.UPDATE_ROOM, rooms), players);
+};
+const handleShipsCreation = (message) => {
+    room_controller_1.roomController.setShips(message.data);
+    const data = (0, parseData_1.parseData)(message.data);
+    const room = room_controller_1.roomController.findRoomByPlayerID(data.indexPlayer);
+    const players = room.roomUsers;
+    if (room_controller_1.roomController.canGameStart()) {
+        players.forEach((player) => {
+            const game = room_controller_1.roomController.startGame();
+            handleDistribution(wrapResp(model_1.messageTypes.CREATE_GAME, game), [player]);
+        });
+    }
+};
+const handleDistribution = (message, players) => {
+    for (const [socket, player] of connection_controller_1.connectionController.entries()) {
+        if (players.includes(player) && socket.readyState === ws_1.WebSocket.OPEN) {
+            socket.send(message);
+        }
+    }
 };
 const wrapResp = (type, data) => {
     return JSON.stringify({

@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto';
-import { Player, Room, RoomData, Game } from '../model';
+import { Player, Room, RoomData, Game, GameData } from '../model';
 import { parseData } from '../utils/parseData';
 
 export class RoomController {
-  public rooms: Room[] = [];
+  public rooms: Room[] = []; // айди обоих
   public game: Game = {
     idGame: '',
-    idPlayer: '',
+    idPlayer: '', // айди игрока
   };
 
   public createRoom(player: Player) {
@@ -14,6 +14,7 @@ export class RoomController {
       roomId: randomUUID(),
       roomUsers: [player],
       roomStatus: 'available',
+      shipsByUserID: new Map(),
     };
 
     this.rooms.push(room);
@@ -48,7 +49,52 @@ export class RoomController {
     return this.game;
   }
 
-  // public deleteAvailableRoom() {};
+  public setShips(data: string) {
+    const gameData: GameData = parseData(data);
+    const playerID = gameData.indexPlayer;
+    const room = this.findRoomByPlayerID(playerID);
+    const ships = gameData.ships;
+    const currentPlayerShips = room.shipsByUserID;
+    currentPlayerShips.set(playerID, ships);
+    room.shipsByUserID = currentPlayerShips;
+  }
+
+  public canGameStart = (playerID: string): boolean => {
+    const room = this.findRoomByPlayerID(playerID);
+    const ships = room.shipsByUserID.values();
+    if (
+      ships.next().value?.length === 10 &&
+      ships.next().value?.length === 10
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  public startGame(playerID: string) {
+    const room = this.findRoomByPlayerID(playerID);
+    const ships = room.shipsByUserID.get(playerID);
+    return {
+      ships: ships,
+      currentPlayerIndex: playerID,
+    };
+  }
+
+  public findRoomByPlayerID(playerID: string): Room {
+    const room = this.rooms.find((room: Room) => {
+      const players = room.roomUsers;
+      const index = players.findIndex((player) => playerID === player?.index);
+      if (index >= 0) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+    if (!room) {
+      throw new Error('Room does not exist');
+    }
+    return room;
+  }
 
   private findRoom(roomID: string): Room {
     const room = this.rooms.find((room: Room) => room.roomId === roomID);
