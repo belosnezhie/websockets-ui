@@ -89,11 +89,11 @@ const handleShipsCreation = (message) => {
             ]);
             handleTurn(room.nextTurnPlayerID, player);
         });
+        room_controller_1.roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
     }
 };
 const handleTurn = (nextTurnPlayerID, player) => {
     handleDistribution(wrapResp(model_1.messageTypes.TURN, nextTurnPlayerID), [player]);
-    room_controller_1.roomController.setNextTurnPlayerId(nextTurnPlayerID);
 };
 const handleAttack = (message) => {
     const data = (0, parseData_1.parseData)(message.data);
@@ -107,6 +107,7 @@ const handleAttack = (message) => {
         handleDistribution(wrapResp(model_1.messageTypes.ATTACK, (0, views_1.getAttackMessage)(data, attackResult)), [player]);
         handleTurn(room.nextTurnPlayerID, player);
     });
+    room_controller_1.roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
 };
 const handleDistribution = (message, players) => {
     for (const [socket, player] of connection_controller_1.connectionController.entries()) {

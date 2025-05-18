@@ -170,10 +170,10 @@ export class RoomController {
             shipPositions[i]!.x === position.x &&
             shipPositions[i]!.y === position.y
           ) {
-            // не удалил из массива
             shipPositions.splice(i, 1);
             if (shipPositions.length <= 0) {
               field[position.y]![position.x] = 'killed';
+              enemyShipCoordinates?.delete(shipKey);
               return 'killed';
             }
             field[position.y]![position.x] = 'shot';
