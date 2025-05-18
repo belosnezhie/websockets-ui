@@ -1,4 +1,4 @@
-import { Room, Ship, Player } from 'model';
+import { Room, Ship, Player, Position, Attack } from 'model';
 
 export interface StartGameMessage {
   ships: Ship[];
@@ -27,4 +27,24 @@ export const getUpdateRoomMessage = (rooms: Room[]): UpdateRoomMessage[] => {
     });
   }
   return res;
+};
+
+export interface AttackMessage {
+  position: Position;
+  currentPlayer: string;
+  status: 'miss' | 'killed' | 'shot';
+}
+
+export const getAttackMessage = (
+  attackData: Attack,
+  result: 'miss' | 'killed' | 'shot',
+): AttackMessage => {
+  return {
+    position: {
+      x: attackData.x,
+      y: attackData.y,
+    },
+    currentPlayer: attackData.indexPlayer,
+    status: result,
+  };
 };

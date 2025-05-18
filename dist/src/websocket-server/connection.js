@@ -8,6 +8,7 @@ const model_1 = require("../model");
 const parseData_1 = require("../utils/parseData");
 const room_controller_1 = require("../controllers/room-controller");
 const state_controller_1 = require("../controllers/state-controller");
+const views_1 = require("../views");
 function handleConnection(ws) {
     console.log('New player connected');
     ws.on('open', function open() {
@@ -29,6 +30,9 @@ function handleConnection(ws) {
             case model_1.messageTypes.ADD_SHIPS:
                 handleShipsCreation(incomingMessage);
                 break;
+            case model_1.messageTypes.ATTACK:
+                handleAttack(incomingMessage);
+                break;
         }
     });
     ws.on('close', () => {
@@ -41,7 +45,7 @@ const handleRegistration = (ws, message) => {
     connection_controller_1.connectionController.set(ws, player);
     ws.send(wrapResp(message.type, player));
     const rooms = room_controller_1.roomController.shareRooms();
-    ws.send(wrapResp(model_1.messageTypes.UPDATE_ROOM, rooms));
+    ws.send(wrapResp(model_1.messageTypes.UPDATE_ROOM, (0, views_1.getUpdateRoomMessage)(rooms)));
     const winners = state_controller_1.stateController.shareWinners();
     ws.send(wrapResp(model_1.messageTypes.UPDATE_WINNERS, winners));
 };
@@ -51,8 +55,8 @@ const handleRoomCreation = (ws) => {
         throw new Error('Player does not exist');
     }
     room_controller_1.roomController.createRoom(currentPlayer);
-    const newRoom = room_controller_1.roomController.shareRooms();
-    ws.send(wrapResp(model_1.messageTypes.UPDATE_ROOM, newRoom));
+    const newRooms = room_controller_1.roomController.shareRooms();
+    ws.send(wrapResp(model_1.messageTypes.UPDATE_ROOM, (0, views_1.getUpdateRoomMessage)(newRooms)));
 };
 const handleAddingUser = (ws, message) => {
     const currentPlayer = connection_controller_1.connectionController.get(ws);
@@ -61,26 +65,48 @@ const handleAddingUser = (ws, message) => {
     }
     const room = room_controller_1.roomController.addPlayer(message.data, currentPlayer);
     const players = room[0]?.roomUsers;
-    handleDistribution(wrapResp(model_1.messageTypes.UPDATE_ROOM, room), players);
+    handleDistribution(wrapResp(model_1.messageTypes.UPDATE_ROOM, (0, views_1.getUpdateRoomMessage)(room)), players);
     players.forEach((player) => {
         const game = room_controller_1.roomController.createGame(player);
         handleDistribution(wrapResp(model_1.messageTypes.CREATE_GAME, game), [player]);
     });
     const roomID = room[0]?.roomId;
     const rooms = room_controller_1.roomController.makeRoomUnavailible(roomID);
-    handleDistribution(wrapResp(model_1.messageTypes.UPDATE_ROOM, rooms), players);
+    handleDistribution(wrapResp(model_1.messageTypes.UPDATE_ROOM, (0, views_1.getUpdateRoomMessage)(rooms)), players);
 };
 const handleShipsCreation = (message) => {
     room_controller_1.roomController.setShips(message.data);
     const data = (0, parseData_1.parseData)(message.data);
+    const playerID = data.indexPlayer;
     const room = room_controller_1.roomController.findRoomByPlayerID(data.indexPlayer);
     const players = room.roomUsers;
-    if (room_controller_1.roomController.canGameStart()) {
+    if (room_controller_1.roomController.canGameStart(playerID)) {
         players.forEach((player) => {
-            const game = room_controller_1.roomController.startGame();
-            handleDistribution(wrapResp(model_1.messageTypes.CREATE_GAME, game), [player]);
+            const game = room_controller_1.roomController.startGame(playerID);
+            const startGameMessage = (0, views_1.getStartGameMessage)(game);
+            handleDistribution(wrapResp(model_1.messageTypes.START_GAME, startGameMessage), [
+                player,
+            ]);
+            handleTurn(room.nextTurnPlayerID, player);
         });
     }
+};
+const handleTurn = (nextTurnPlayerID, player) => {
+    handleDistribution(wrapResp(model_1.messageTypes.TURN, nextTurnPlayerID), [player]);
+    room_controller_1.roomController.setNextTurnPlayerId(nextTurnPlayerID);
+};
+const handleAttack = (message) => {
+    const data = (0, parseData_1.parseData)(message.data);
+    if (!room_controller_1.roomController.checkTurn(data.indexPlayer)) {
+        return;
+    }
+    const attackResult = room_controller_1.roomController.checkAttack(message.data);
+    const room = room_controller_1.roomController.findRoomByPlayerID(data.indexPlayer);
+    const players = room.roomUsers;
+    players.forEach((player) => {
+        handleDistribution(wrapResp(model_1.messageTypes.ATTACK, (0, views_1.getAttackMessage)(data, attackResult)), [player]);
+        handleTurn(room.nextTurnPlayerID, player);
+    });
 };
 const handleDistribution = (message, players) => {
     for (const [socket, player] of connection_controller_1.connectionController.entries()) {

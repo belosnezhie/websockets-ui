@@ -1,12 +1,22 @@
 import { randomUUID } from 'crypto';
-import { Player, Room, RoomData, Game, GameData } from '../model';
+import {
+  Player,
+  Room,
+  RoomData,
+  Game,
+  GameData,
+  Attack,
+  Position,
+  Ship,
+  createField,
+} from '../model';
 import { parseData } from '../utils/parseData';
 
 export class RoomController {
-  public rooms: Room[] = []; // айди обоих
+  public rooms: Room[] = [];
   public game: Game = {
     idGame: '',
-    idPlayer: '', // айди игрока
+    idPlayer: '',
   };
 
   public createRoom(player: Player) {
@@ -15,6 +25,8 @@ export class RoomController {
       roomUsers: [player],
       roomStatus: 'available',
       shipsByUserID: new Map(),
+      fieldsByUserID: new Map(),
+      shipsCoordinatesByUserID: new Map(),
       nextTurnPlayerID: player.index,
     };
 
@@ -58,6 +70,8 @@ export class RoomController {
     const currentPlayerShips = room.shipsByUserID;
     currentPlayerShips.set(playerID, ships);
     room.shipsByUserID = currentPlayerShips;
+
+    this.addShipsToModal(ships, playerID);
   }
 
   public canGameStart = (playerID: string): boolean => {
@@ -84,11 +98,6 @@ export class RoomController {
     };
   }
 
-  public getTurnPlayerId(prevTurnPlayerID: string): string {
-    const room = this.findRoomByPlayerID(prevTurnPlayerID);
-    return String(room.nextTurnPlayerID);
-  }
-
   public setNextTurnPlayerId(currentPlayerID: string): void {
     const room = this.findRoomByPlayerID(currentPlayerID);
     const nextPlayer = room.roomUsers.find(
@@ -113,12 +122,109 @@ export class RoomController {
     return room;
   }
 
+  public checkTurn(playerID: string): boolean {
+    const room = this.findRoomByPlayerID(playerID);
+    return room.nextTurnPlayerID !== playerID;
+  }
+
+  public checkAttack(data: string): 'miss' | 'killed' | 'shot' {
+    const attackData: Attack = parseData(data);
+
+    const room = this.findRoomByPlayerID(attackData.indexPlayer);
+
+    const enemy = room.roomUsers.find(
+      (player) => player?.index != attackData.indexPlayer,
+    );
+    const field = room.fieldsByUserID.get(String(enemy?.index)) as string[][]; // enemy field
+
+    const cellState = field[attackData.y]![attackData.x]!;
+
+    if (cellState === '') {
+      field[attackData.y]![attackData.x] = 'miss';
+      return 'miss';
+    }
+
+    if (cellState === 'miss') {
+      return 'miss';
+    }
+
+    if (cellState === 'shot') {
+      return 'miss';
+    }
+
+    if (cellState === 'ship') {
+      const position: Position = {
+        x: attackData.x,
+        y: attackData.y,
+      };
+
+      const enemyShipCoordinates = room.shipsCoordinatesByUserID.get(
+        enemy?.index as string,
+      );
+
+      for (const shipKey of enemyShipCoordinates?.keys() as MapIterator<string>) {
+        const shipPositions = enemyShipCoordinates?.get(shipKey) as Position[];
+
+        for (let i = 0; i < shipPositions.length; i += 1) {
+          if (
+            shipPositions[i]!.x === position.x &&
+            shipPositions[i]!.y === position.y
+          ) {
+            // не удалил из массива
+            shipPositions.splice(i, 1);
+            if (shipPositions.length <= 0) {
+              field[position.y]![position.x] = 'killed';
+              return 'killed';
+            }
+            field[position.y]![position.x] = 'shot';
+            return 'shot';
+          }
+        }
+      }
+    }
+
+    return 'miss';
+  }
+
   private findRoom(roomID: string): Room {
     const room = this.rooms.find((room: Room) => room.roomId === roomID);
     if (!room) {
       throw new Error('Room does not exist');
     }
     return room;
+  }
+
+  private addShipsToModal(ships: Ship[], playerdID: string) {
+    const field = createField();
+    const shipsCoordinates: Map<string, Position[]> = new Map();
+
+    ships.forEach((ship: Ship) => {
+      const shipCoordinates: Position[] = [];
+
+      for (let i = 0; i < ship.length; i += 1) {
+        if (ship.direction) {
+          field[ship.position.y + i]![ship.position.x] = 'ship';
+          shipCoordinates.push({
+            x: ship.position.x,
+            y: ship.position.y + i,
+          });
+        } else {
+          field[ship.position.y]![ship.position.x + i] = 'ship';
+          shipCoordinates.push({
+            x: ship.position.x + i,
+            y: ship.position.y,
+          });
+        }
+      }
+      shipsCoordinates.set(
+        `${ship.type}_${ship.position.x}_${ship.position.y}`,
+        shipCoordinates,
+      );
+    });
+
+    const room = this.findRoomByPlayerID(playerdID);
+    room.fieldsByUserID.set(playerdID, field);
+    room.shipsCoordinatesByUserID.set(playerdID, shipsCoordinates);
   }
 }
 

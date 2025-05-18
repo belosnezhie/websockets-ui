@@ -46,6 +46,8 @@ export interface Room {
   roomId: string;
   roomUsers: [Player?, Player?];
   shipsByUserID: Map<string, Ship[]>;
+  fieldsByUserID: Map<string, string[][]>;
+  shipsCoordinatesByUserID: Map<string, Map<string, Position[]>>;
   nextTurnPlayerID: string;
   roomStatus?: 'available' | 'occupied';
 }
@@ -72,7 +74,29 @@ export interface Ship {
   type: 'small' | 'medium' | 'large' | 'huge';
 }
 
-interface Position {
+export interface Position {
   x: number;
   y: number;
 }
+
+export interface Attack {
+  gameId: string;
+  x: number;
+  y: number;
+  indexPlayer: string;
+}
+
+export const createField = (): string[][] => {
+  return [
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', ''],
+  ];
+};

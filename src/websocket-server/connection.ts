@@ -8,12 +8,14 @@ import {
   Room,
   Player,
   GameData,
+  Attack,
 } from '../model';
 import { parseData } from '../utils/parseData';
 import { roomController } from '../controllers/room-controller';
 import { stateController } from '../controllers/state-controller';
 import {
   StartGameMessage,
+  getAttackMessage,
   getStartGameMessage,
   getUpdateRoomMessage,
 } from '../views';
@@ -45,6 +47,10 @@ export function handleConnection(ws: WebSocket) {
 
       case messageTypes.ADD_SHIPS:
         handleShipsCreation(incomingMessage);
+        break;
+
+      case messageTypes.ATTACK:
+        handleAttack(incomingMessage);
         break;
     }
   });
@@ -114,13 +120,34 @@ const handleShipsCreation = (message: IncomingRequest) => {
       handleDistribution(wrapResp(messageTypes.START_GAME, startGameMessage), [
         player,
       ]);
-
-      handleDistribution(wrapResp(messageTypes.TURN, room.nextTurnPlayerID), [
-        player,
-      ]);
-      roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
+      handleTurn(room.nextTurnPlayerID, player);
     });
+    roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
   }
+};
+
+const handleTurn = (nextTurnPlayerID: string, player: Player) => {
+  handleDistribution(wrapResp(messageTypes.TURN, nextTurnPlayerID), [player]);
+};
+
+const handleAttack = (message: IncomingRequest) => {
+  const data: Attack = parseData(message.data);
+  if (!roomController.checkTurn(data.indexPlayer)) {
+    return;
+  }
+  const attackResult: 'miss' | 'killed' | 'shot' = roomController.checkAttack(
+    message.data,
+  );
+  const room = roomController.findRoomByPlayerID(data.indexPlayer);
+  const players: Player[] = room.roomUsers as Player[];
+  players.forEach((player) => {
+    handleDistribution(
+      wrapResp(messageTypes.ATTACK, getAttackMessage(data, attackResult)),
+      [player],
+    );
+    handleTurn(room.nextTurnPlayerID, player);
+  });
+  roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
 };
 
 const handleDistribution = (message: string, players: Player[]): void => {

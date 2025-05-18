@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.messageTypes = void 0;
+exports.createField = exports.messageTypes = void 0;
 exports.messageTypes = {
     REG: 'reg',
     UPDATE_WINNERS: 'update_winners',
@@ -15,4 +15,19 @@ exports.messageTypes = {
     TURN: 'turn',
     FINISH: 'finish',
 };
+const createField = () => {
+    return [
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', ''],
+    ];
+};
+exports.createField = createField;
 //# sourceMappingURL=index.js.map
