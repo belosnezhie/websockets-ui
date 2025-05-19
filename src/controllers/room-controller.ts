@@ -131,8 +131,6 @@ export class RoomController {
   public checkAttack(
     attackData: Attack,
   ): 'miss' | 'killed' | 'shot' | 'finish' {
-    // const attackData: Attack = parseData(data);
-
     const room = this.findRoomByPlayerID(attackData.indexPlayer);
 
     const enemy = room.roomUsers.find(
