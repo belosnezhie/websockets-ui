@@ -1,4 +1,4 @@
-import { Room, Ship, Player, Position, Attack } from 'model';
+import { Room, Ship, Player, Position, Attack, Winner } from 'model';
 
 export interface StartGameMessage {
   ships: Ship[];
@@ -46,5 +46,31 @@ export const getAttackMessage = (
     },
     currentPlayer: attackData.indexPlayer,
     status: result,
+  };
+};
+
+export interface WinnerMessage {
+  name: string;
+  wins: number;
+}
+
+export const getWinnersMessage = (winners: Winner[]): WinnerMessage[] => {
+  const result: WinnerMessage[] = [];
+  winners.forEach((winner) => {
+    result.push({
+      name: winner.name,
+      wins: winner.wins,
+    });
+  });
+  return result;
+};
+
+export interface FinishMessage {
+  winPlayer: string;
+}
+
+export const getFinishMessage = (id: string): FinishMessage => {
+  return {
+    winPlayer: id,
   };
 };

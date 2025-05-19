@@ -11,6 +11,7 @@ import {
   createField,
 } from '../model';
 import { parseData } from '../utils/parseData';
+import { stateController } from './state-controller';
 
 export class RoomController {
   public rooms: Room[] = [];
@@ -127,7 +128,7 @@ export class RoomController {
     return room.nextTurnPlayerID !== playerID;
   }
 
-  public checkAttack(data: string): 'miss' | 'killed' | 'shot' {
+  public checkAttack(data: string): 'miss' | 'killed' | 'shot' | 'finish' {
     const attackData: Attack = parseData(data);
 
     const room = this.findRoomByPlayerID(attackData.indexPlayer);
@@ -135,7 +136,7 @@ export class RoomController {
     const enemy = room.roomUsers.find(
       (player) => player?.index != attackData.indexPlayer,
     );
-    const field = room.fieldsByUserID.get(String(enemy?.index)) as string[][]; // enemy field
+    const field = room.fieldsByUserID.get(String(enemy?.index)) as string[][];
 
     const cellState = field[attackData.y]![attackData.x]!;
 
@@ -174,6 +175,9 @@ export class RoomController {
             if (shipPositions.length <= 0) {
               field[position.y]![position.x] = 'killed';
               enemyShipCoordinates?.delete(shipKey);
+              if (enemyShipCoordinates?.size === 0) {
+                return this.finishGame(room, attackData.indexPlayer);
+              }
               return 'killed';
             }
             field[position.y]![position.x] = 'shot';
@@ -184,6 +188,15 @@ export class RoomController {
     }
 
     return 'miss';
+  }
+
+  private finishGame(room: Room, winnerID: string): 'finish' {
+    const winnerIndex = room.roomUsers.findIndex(
+      (player) => player?.index === winnerID,
+    );
+    const name = room.roomUsers[winnerIndex]?.name;
+    stateController.updateWinners(String(name), winnerID);
+    return 'finish';
   }
 
   private findRoom(roomID: string): Room {

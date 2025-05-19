@@ -18,8 +18,9 @@ import {
   getAttackMessage,
   getStartGameMessage,
   getUpdateRoomMessage,
+  getWinnersMessage,
+  getFinishMessage,
 } from '../views';
-// import { gameController } from '../controllers/game-controller';
 
 export function handleConnection(ws: WebSocket) {
   console.log('New player connected');
@@ -69,7 +70,7 @@ const handleRegistration = (ws: WebSocket, message: IncomingRequest) => {
   const rooms = roomController.shareRooms();
   ws.send(wrapResp(messageTypes.UPDATE_ROOM, getUpdateRoomMessage(rooms)));
   const winners = stateController.shareWinners();
-  ws.send(wrapResp(messageTypes.UPDATE_WINNERS, winners));
+  ws.send(wrapResp(messageTypes.UPDATE_WINNERS, getWinnersMessage(winners)));
 };
 
 const handleRoomCreation = (ws: WebSocket) => {
@@ -79,7 +80,12 @@ const handleRoomCreation = (ws: WebSocket) => {
   }
   roomController.createRoom(currentPlayer);
   const newRooms = roomController.shareRooms();
-  ws.send(wrapResp(messageTypes.UPDATE_ROOM, getUpdateRoomMessage(newRooms)));
+  const sockets = connectionController.keys();
+  sockets.forEach((socket) => {
+    socket.send(
+      wrapResp(messageTypes.UPDATE_ROOM, getUpdateRoomMessage(newRooms)),
+    );
+  });
 };
 
 const handleAddingUser = (ws: WebSocket, message: IncomingRequest) => {
@@ -135,25 +141,44 @@ const handleAttack = (message: IncomingRequest) => {
   if (!roomController.checkTurn(data.indexPlayer)) {
     return;
   }
-  const attackResult: 'miss' | 'killed' | 'shot' = roomController.checkAttack(
-    message.data,
-  );
+  const attackResult: 'miss' | 'killed' | 'shot' | 'finish' =
+    roomController.checkAttack(message.data);
   const room = roomController.findRoomByPlayerID(data.indexPlayer);
   const players: Player[] = room.roomUsers as Player[];
+
+  if (attackResult === 'finish') {
+    handleFinish(data.indexPlayer, players);
+  } else {
+    players.forEach((player) => {
+      handleDistribution(
+        wrapResp(messageTypes.ATTACK, getAttackMessage(data, attackResult)),
+        [player],
+      );
+      if (attackResult === 'miss') {
+        handleTurn(room.nextTurnPlayerID, player);
+      } else {
+        handleTurn(data.indexPlayer, player);
+      }
+    });
+    if (attackResult === 'miss') {
+      roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
+    }
+  }
+};
+
+const handleFinish = (winnerID: string, players: Player[]) => {
+  const winner = stateController.shareWinner(winnerID);
+  const winners = stateController.shareWinners();
   players.forEach((player) => {
     handleDistribution(
-      wrapResp(messageTypes.ATTACK, getAttackMessage(data, attackResult)),
+      wrapResp(messageTypes.FINISH, getFinishMessage(winner.id)),
       [player],
     );
-    if (attackResult === 'miss') {
-      handleTurn(room.nextTurnPlayerID, player);
-    } else {
-      handleTurn(data.indexPlayer, player);
-    }
+    handleDistribution(
+      wrapResp(messageTypes.UPDATE_WINNERS, getWinnersMessage(winners)),
+      [player],
+    );
   });
-  if (attackResult === 'miss') {
-    roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
-  }
 };
 
 const handleDistribution = (message: string, players: Player[]): void => {

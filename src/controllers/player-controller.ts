@@ -4,14 +4,15 @@ import { parseData } from '../utils/parseData';
 
 export class PlayerController {
   public players: Player[] = [];
-
-  constructor() {}
+  private playersData: PlayerData[] = [];
 
   public createPlayer(data: string): Player {
-    const playerData = parseData(data);
-    if (!this.isPlayerData(playerData)) {
-      throw new Error('Invalid player data');
+    const playerData: PlayerData = parseData(data);
+
+    if (this.isPasswordCorrect(playerData)) {
+      return this.isPasswordCorrect(playerData) as Player;
     }
+
     const player: Player = {
       name: playerData.name,
       index: randomUUID(),
@@ -20,15 +21,23 @@ export class PlayerController {
     };
 
     this.players.push(player);
+    this.playersData.push(playerData);
     return player;
   }
 
-  private isPlayerData(obj: unknown): obj is PlayerData {
-    if (typeof obj !== 'object' || obj === null) return false;
+  public isPasswordCorrect(playerData: PlayerData): Player | undefined {
+    const player = this.playersData.find(
+      (player) => player.name === playerData.name,
+    );
 
-    const data = obj as Record<string, unknown>;
-
-    return typeof data.name === 'string' && typeof data.password === 'string';
+    if (player && player.password !== playerData.password) {
+      return {
+        name: playerData.name,
+        index: '',
+        error: true,
+        errorText: 'Wrong passord',
+      };
+    }
   }
 }
 
