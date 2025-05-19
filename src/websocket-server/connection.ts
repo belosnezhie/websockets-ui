@@ -113,10 +113,13 @@ const handleAddingUser = (ws: WebSocket, message: IncomingRequest) => {
 
   const roomID = room[0]?.roomId as string;
   const rooms = roomController.makeRoomUnavailible(roomID);
-  handleDistribution(
-    wrapResp(messageTypes.UPDATE_ROOM, getUpdateRoomMessage(rooms)),
-    players,
-  );
+
+  const sockets = connectionController.keys();
+  sockets.forEach((socket) => {
+    socket.send(
+      wrapResp(messageTypes.UPDATE_ROOM, getUpdateRoomMessage(rooms)),
+    );
+  });
 };
 
 const handleShipsCreation = (message: IncomingRequest) => {
