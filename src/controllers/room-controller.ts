@@ -128,8 +128,10 @@ export class RoomController {
     return room.nextTurnPlayerID !== playerID;
   }
 
-  public checkAttack(data: string): 'miss' | 'killed' | 'shot' | 'finish' {
-    const attackData: Attack = parseData(data);
+  public checkAttack(
+    attackData: Attack,
+  ): 'miss' | 'killed' | 'shot' | 'finish' {
+    // const attackData: Attack = parseData(data);
 
     const room = this.findRoomByPlayerID(attackData.indexPlayer);
 
@@ -150,7 +152,7 @@ export class RoomController {
     }
 
     if (cellState === 'shot') {
-      return 'miss';
+      return 'shot';
     }
 
     if (cellState === 'ship') {
@@ -187,7 +189,40 @@ export class RoomController {
       }
     }
 
-    return 'miss';
+    return 'killed';
+  }
+
+  public getRandomCell(playerID: string): Position {
+    const availableCells: Position[] = [];
+
+    const field = this.getEnemyField(playerID);
+
+    for (let x = 0; x < field.length; x++) {
+      for (let y = 0; y < field[x]!.length; y++) {
+        const cell = field[x]![y];
+        if (cell === '' || cell === 'ship') {
+          availableCells.push({ x, y });
+        }
+      }
+    }
+
+    if (availableCells.length === 0) {
+      return {
+        x: 0,
+        y: 0,
+      };
+    }
+
+    const randomIndex = Math.floor(Math.random() * availableCells.length);
+    return availableCells[randomIndex]!;
+  }
+
+  private getEnemyField(playerID: string): string[][] {
+    const room = this.findRoomByPlayerID(playerID);
+
+    const enemy = room.roomUsers.find((player) => player?.index != playerID);
+    const field = room.fieldsByUserID.get(String(enemy?.index)) as string[][];
+    return field;
   }
 
   private finishGame(room: Room, winnerID: string): 'finish' {

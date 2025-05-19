@@ -9,6 +9,7 @@ import {
   Player,
   GameData,
   Attack,
+  RandomAttack,
 } from '../model';
 import { parseData } from '../utils/parseData';
 import { roomController } from '../controllers/room-controller';
@@ -20,6 +21,7 @@ import {
   getUpdateRoomMessage,
   getWinnersMessage,
   getFinishMessage,
+  getTurnMessage,
 } from '../views';
 
 export function handleConnection(ws: WebSocket) {
@@ -52,6 +54,10 @@ export function handleConnection(ws: WebSocket) {
 
       case messageTypes.ATTACK:
         handleAttack(incomingMessage);
+        break;
+
+      case messageTypes.RANDOM_ATTACK:
+        handleRandomAttack(incomingMessage);
         break;
     }
   });
@@ -133,7 +139,10 @@ const handleShipsCreation = (message: IncomingRequest) => {
 };
 
 const handleTurn = (nextTurnPlayerID: string, player: Player) => {
-  handleDistribution(wrapResp(messageTypes.TURN, nextTurnPlayerID), [player]);
+  handleDistribution(
+    wrapResp(messageTypes.TURN, getTurnMessage(nextTurnPlayerID)),
+    [player],
+  );
 };
 
 const handleAttack = (message: IncomingRequest) => {
@@ -142,7 +151,7 @@ const handleAttack = (message: IncomingRequest) => {
     return;
   }
   const attackResult: 'miss' | 'killed' | 'shot' | 'finish' =
-    roomController.checkAttack(message.data);
+    roomController.checkAttack(data);
   const room = roomController.findRoomByPlayerID(data.indexPlayer);
   const players: Player[] = room.roomUsers as Player[];
 
@@ -164,6 +173,23 @@ const handleAttack = (message: IncomingRequest) => {
       roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
     }
   }
+};
+
+const handleRandomAttack = (message: IncomingRequest) => {
+  const data: RandomAttack = parseData(message.data);
+  const coordinates = roomController.getRandomCell(data.indexPlayer);
+  const attackData: Attack = {
+    gameId: data.gameId,
+    x: coordinates.x,
+    y: coordinates.y,
+    indexPlayer: data.indexPlayer,
+  };
+  const AttackMessage: IncomingRequest = {
+    type: '',
+    data: JSON.stringify(attackData),
+    id: 0,
+  };
+  handleAttack(AttackMessage);
 };
 
 const handleFinish = (winnerID: string, players: Player[]) => {
@@ -190,6 +216,7 @@ const handleDistribution = (message: string, players: Player[]): void => {
 };
 
 const wrapResp = (type: string, data: unknown): string => {
+  console.log('Responsed:', data);
   return JSON.stringify({
     type: type,
     data: JSON.stringify(data),

@@ -29,6 +29,16 @@ export const getUpdateRoomMessage = (rooms: Room[]): UpdateRoomMessage[] => {
   return res;
 };
 
+export interface TurnMessage {
+  currentPlayer: string;
+}
+
+export const getTurnMessage = (id: string): TurnMessage => {
+  return {
+    currentPlayer: id,
+  };
+};
+
 export interface AttackMessage {
   position: Position;
   currentPlayer: string;

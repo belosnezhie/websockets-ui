@@ -87,6 +87,11 @@ export interface Attack {
   indexPlayer: string;
 }
 
+export interface RandomAttack {
+  gameId: string;
+  indexPlayer: string;
+}
+
 export const createField = (): string[][] => {
   return [
     ['', '', '', '', '', '', '', '', '', ''],
