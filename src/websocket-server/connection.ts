@@ -145,9 +145,15 @@ const handleAttack = (message: IncomingRequest) => {
       wrapResp(messageTypes.ATTACK, getAttackMessage(data, attackResult)),
       [player],
     );
-    handleTurn(room.nextTurnPlayerID, player);
+    if (attackResult === 'miss') {
+      handleTurn(room.nextTurnPlayerID, player);
+    } else {
+      handleTurn(data.indexPlayer, player);
+    }
   });
-  roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
+  if (attackResult === 'miss') {
+    roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
+  }
 };
 
 const handleDistribution = (message: string, players: Player[]): void => {

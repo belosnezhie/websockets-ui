@@ -105,9 +105,16 @@ const handleAttack = (message) => {
     const players = room.roomUsers;
     players.forEach((player) => {
         handleDistribution(wrapResp(model_1.messageTypes.ATTACK, (0, views_1.getAttackMessage)(data, attackResult)), [player]);
-        handleTurn(room.nextTurnPlayerID, player);
+        if (attackResult === 'miss') {
+            handleTurn(room.nextTurnPlayerID, player);
+        }
+        else {
+            handleTurn(data.indexPlayer, player);
+        }
     });
-    room_controller_1.roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
+    if (attackResult === 'miss') {
+        room_controller_1.roomController.setNextTurnPlayerId(room.nextTurnPlayerID);
+    }
 };
 const handleDistribution = (message, players) => {
     for (const [socket, player] of connection_controller_1.connectionController.entries()) {
